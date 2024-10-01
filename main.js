@@ -50,15 +50,12 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Muhit o'zgaruvchilarini yuklash       
 const PORT = process.env.PORT || 8000;
 const MONGOURL = process.env.MONGO_URL;
 
-// MongoDB bilan ulanish
 mongoose.connect(MONGOURL)
     .then(() => {
         console.log("Connected to MongoDB");
@@ -71,7 +68,6 @@ mongoose.connect(MONGOURL)
         process.exit(1);
     });
 
-// Foydalanuvchilar uchun schema
 const userSchema = new mongoose.Schema({
     name: String,
     surname: String,
@@ -80,7 +76,6 @@ const userSchema = new mongoose.Schema({
 
 const UserModule = mongoose.model("User", userSchema);
 
-// Foydalanuvchilarni olish uchun marshrut
 app.get("/getUsers", async (req, res) => {
     try {
         const userData = await UserModule.find();
@@ -91,19 +86,17 @@ app.get("/getUsers", async (req, res) => {
     }
 });
 
-// Foydalanuvchini qo'shish
 app.post("/addUser", async (req, res) => {
     try {
         const newUser = new UserModule(req.body);
         await newUser.save();
-        res.status(201).json(newUser); // Yangi foydalanuvchini qaytaradi
+        res.status(201).json(newUser); 
     } catch (error) {
         console.error("Error adding user:", error.message);
         res.status(500).send("Server error");
     }
 });
 
-// Foydalanuvchini yangilash
 app.put("/updateUser/:id", async (req, res) => {
     try {
         const updatedUser = await UserModule.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -117,7 +110,6 @@ app.put("/updateUser/:id", async (req, res) => {
     }
 });
 
-// Foydalanuvchini o'chirish
 app.delete("/deleteUser/:id", async (req, res) => {
     try {
         const deletedUser = await UserModule.findByIdAndDelete(req.params.id);
