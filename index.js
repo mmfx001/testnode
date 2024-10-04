@@ -1,46 +1,5 @@
-// const express = require('express');
-// const cors = require('cors');
+// backend/index.js
 
-// const ApiUrl = express();
-
-// // CORS ni o'rnatish
-// ApiUrl.use(cors({
-//     origin: 'http://localhost:5176', // Frontend manzilini belgilash
-//     methods: ['GET', 'POST'], // Ruxsat etilgan so'rov turlari
-//     allowedHeaders: ['Content-Type'] // Ruxsat etilgan sarlavhalar
-// }));
-
-// ApiUrl.use(express.json());
-
-// let users = [];
-
-// // Foydalanuvchini qo'shish (POST so'rovi)
-// ApiUrl.post('/users', (req, res) => {
-//     const { name, surname, age } = req.body;
-
-//     if (!name || !surname || !age) {
-//         return res.status(400).json({ message: "Iltimos, barcha qiymatlarni kiriting" });
-//     }
-
-//     const id = Math.floor(Math.random() * 10000) + 1;
-
-//     const existingUser = users.find(v => v.name === name && v.surname === surname && v.age === age);
-//     if (existingUser) {
-//         return res.status(400).json({ message: "Bunday foydalanuvchi allaqachon mavjud" });
-//     }
-
-//     users.push({ id, name, surname, age });
-//     res.json({ data: users });
-// });
-
-// // Foydalanuvchilarni olish (GET so'rovi)
-// ApiUrl.get('/users', (req, res) => {
-//     res.json({ data: users });
-// });
-
-// ApiUrl.listen(5002, () => {
-//     console.log('API 5002-portda ishga tushdi');
-// });
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -69,9 +28,10 @@ mongoose.connect(MONGOURL)
     });
 
 const userSchema = new mongoose.Schema({
-    name: String,
-    surname: String,
-    age: Number,
+    name: { type: String, required: true, unique: true },
+    surname: { type: String, required: true },
+    age: { type: Number, required: true },
+    password: { type: String, required: true }, // Added password field
 });
 
 const UserModule = mongoose.model("User", userSchema);
@@ -88,7 +48,18 @@ app.get("/getUsers", async (req, res) => {
 
 app.post("/addUser", async (req, res) => {
     try {
-        const newUser = new UserModule(req.body);
+        const { name, surname, age, password } = req.body;
+
+        if (!name || !surname || !age || !password) {
+            return res.status(400).json({ message: "Please provide all required fields." });
+        }
+
+        const existingUser = await UserModule.findOne({ name });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists." });
+        }
+
+        const newUser = new UserModule({ name, surname, age, password });
         await newUser.save();
         res.status(201).json(newUser); 
     } catch (error) {
